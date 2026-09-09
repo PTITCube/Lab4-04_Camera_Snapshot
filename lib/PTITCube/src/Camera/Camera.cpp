@@ -80,18 +80,18 @@ bool PTIT_Camera::captureToFile(const char* path) {
 
     // Đảm bảo kênh MUX đang trỏ vào Camera và cổng Serial2 đang mở ở baudrate 115200
     selectCamera();
-    delay(100);
 
     // Dọn dẹp bộ nhớ đệm
     while(Serial2.available()) Serial2.read();
 
     // 1. Gửi lệnh CAPTURE
     Serial.println("[Camera] Đang gửi lệnh chụp ảnh tới ESP32-CAM...");
-    Serial2.println("CAPTURE");
+    Serial2.print("CAPTURE\n");
+    Serial2.flush();
 
     // 2. Chờ ESP32-CAM phản hồi về SIZE
     String response = "";
-    long startTime = millis();
+    unsigned long startTime = millis();
     bool sizeReceived = false;
     long imageSize = 0;
 
@@ -104,8 +104,12 @@ bool PTIT_Camera::captureToFile(const char* path) {
                 sizeReceived = true;
                 break;
             }
+            if (response.startsWith("ERROR:")) {
+                Serial.println("[Camera] ESP32-CAM: " + response);
+                return false;
+            }
         }
-        delay(10);
+        delay(1);
     }
 
     if (!sizeReceived || imageSize <= 0) {
@@ -136,7 +140,8 @@ bool PTIT_Camera::captureToFile(const char* path) {
     }
 
     // 5. Báo cho ESP32-CAM biết OBC đã sẵn sàng nhận dữ liệu
-    Serial2.println("OK");
+    Serial2.print("OK\n");
+    Serial2.flush();
     Serial.println("[Camera] Đang tải dữ liệu ảnh từ ESP32-CAM...");
 
     // 6. Nhận dữ liệu raw từ UART và ghi trực tiếp vào thẻ nhớ

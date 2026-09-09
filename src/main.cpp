@@ -48,9 +48,14 @@ void loop() {
                 Serial.println("[Loi] Chup anh that bai.");
             }
         }
-    }
 
-    while (Serial.available() > 0) {
-        Serial.read();
+        // Consume CR/LF from the same Serial Monitor command.
+        while (Serial.available() > 0) {
+            char trailing = Serial.peek();
+            if (trailing != '\r' && trailing != '\n') {
+                break;
+            }
+            Serial.read();
+        }
     }
 }

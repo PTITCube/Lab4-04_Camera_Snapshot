@@ -13,7 +13,6 @@
 
 #include <Arduino.h>
 #include <PTITCube.h>
-#include "Storage/Storage.h" // Sử dụng Storage để hỗ trợ kiểm tra file nếu cần
 
 PTIT_Camera camera;
 int imageCount = 0;
@@ -22,39 +21,36 @@ void setup() {
     Serial.begin(115200);
     delay(2000);
     
-    Serial.println("\n--- BẮT ĐẦU TEST CAMERA ---");
+    Serial.println("\n--- CAMERA READY ---");
 
-    // Khởi tạo Camera và SD card bên trong module
-    // Hàm init mặc định: gpsSelectPin = 12, camSelectPin = 14
-    if (!camera.init()) {
-        Serial.println("[Lỗi] Không thể khởi tạo Camera hoặc Thẻ nhớ!");
+    if (!camera.init(255, 255)) {
+        Serial.println("[Loi] Khong the khoi tao the nho!");
         while (1) {
-            delay(1000); // Dừng hệ thống nếu lỗi
+            delay(1000);
         }
     }
 
-    Serial.println("[Thành công] Camera đã sẵn sàng.");
+    Serial.println("[OK] Nhap 'p' de chup anh.");
 }
 
 void loop() {
-    if (camera.isReady()) {
-        // Tạo đường dẫn file ảnh
-        String path = "/photos/image_" + String(imageCount) + ".jpg";
-        
-        Serial.print("Đang chụp ảnh và lưu vào: ");
-        Serial.println(path);
+    if (Serial.available() > 0) {
+        char command = Serial.read();
 
-        // Thực hiện chụp ảnh
-        if (camera.captureToFile(path.c_str())) {
-            Serial.println("[Thành công] Đã lưu ảnh thành công.");
-            imageCount++;
-        } else {
-            Serial.println("[Thất bại] Chụp hoặc lưu ảnh bị lỗi.");
+        if (command == 'p' || command == 'P') {
+            String path = "/photos/image_" + String(imageCount) + ".jpg";
+            Serial.println("[Camera] Dang chup: " + path);
+
+            if (camera.captureToFile(path.c_str())) {
+                Serial.println("[OK] Da luu anh: " + path);
+                imageCount++;
+            } else {
+                Serial.println("[Loi] Chup anh that bai.");
+            }
         }
-    } else {
-        Serial.println("[Lỗi] Camera không ở trạng thái sẵn sàng.");
     }
 
-    // Đợi 10 giây trước khi chụp bức tiếp theo
-    delay(10000);
+    while (Serial.available() > 0) {
+        Serial.read();
+    }
 }
